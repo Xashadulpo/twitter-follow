@@ -35,7 +35,8 @@ const FollowButton = ({ targetUserId }: { targetUserId: string }) => {
       signIn('twitter');
     } else {
       window.open('https://x.com/Asif71867019', '_blank');
-      alert('Please follow the account and come back to this page.');
+      console.log("go bro");
+      
     }
   };
 
