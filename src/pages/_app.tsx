@@ -1,6 +1,31 @@
-import '@/styles/globals.css'
-import type { AppProps } from 'next/app'
+import "@/styles/globals.css";
+
+import type { AppProps } from "next/app";
+import { useEffect, useState } from "react";
+import Layout from "../Layout/layout";
+import { useRouter } from "next/router";
+import { ThemeProvider } from "@/Layout/themeProvider";
+import { NextAuthProvider } from "@/components/Provider";
+
 
 export default function App({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />
+  const [ready, setReady] = useState(false);
+  const { pathname } = useRouter();
+  useEffect(() => {
+    setReady(true);
+  }, []);
+  return (
+    <>
+      {ready ? (
+        <NextAuthProvider>
+
+        <ThemeProvider attribute="class" defaultTheme="dark">
+          <Layout pathname={pathname}>
+            <Component {...pageProps} />
+          </Layout>
+        </ThemeProvider>
+        </NextAuthProvider>
+      ) : null}
+    </>
+  );
 }
