@@ -1,13 +1,11 @@
-// pages/api/auth/[...nextauth].ts
-import NextAuth, { NextAuthOptions } from "next-auth";
-import TwitterProvider from "next-auth/providers/twitter";
-import dotenv from "dotenv";
+import NextAuth from 'next-auth';
+import TwitterProvider from 'next-auth/providers/twitter';
+import dotenv from 'dotenv';
 
 dotenv.config();
-
-interface ExtendedProfile {
+interface TwitterProfile {
   id: string;
-  // add any other properties you need from the profile
+  // Add other properties from the profile if needed
 }
 
 const handler = NextAuth({
@@ -15,53 +13,41 @@ const handler = NextAuth({
     TwitterProvider({
       clientId: process.env.TWITTER_CLIENT_ID!,
       clientSecret: process.env.TWITTER_CLIENT_SECRET!,
-      version: "2.0",
+      version: '2.0',
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, account, profile }) {
-      const extendedProfile = profile as ExtendedProfile;
+      console.log('Account:', account);
+      console.log('Profile:', profile);  // Log the profile to see its structure
 
-      if (account?.provider === "twitter") {
-        token.accessToken = account.oauth_token as string;
+      if (account?.provider === 'twitter') {
+        token.accessToken = account.access_token as string;
+        token.refreshToken = account.refresh_token as string;
         token.oauth_token = account.oauth_token as string;
         token.oauth_token_secret = account.oauth_token_secret as string;
-        token.id = extendedProfile.id; // Using extended profile
+        
+        // Cast profile to TwitterProfile type
+        const twitterProfile = profile as TwitterProfile;
+        if (twitterProfile && twitterProfile.id) {
+          token.userId = twitterProfile.id;
+        } else {
+          console.error('Profile is undefined or missing id property');
+        }
       }
       return token;
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken as string | undefined;
-      session.user.oauth_token = token.oauth_token as string | undefined;
-      session.user.oauth_token_secret = token.oauth_token_secret as string | undefined;
-      session.user.id = token.id as string | undefined;
+      session.accessToken = token.accessToken as string;
+      session.refreshToken = token.refreshToken as string;
+      session.oauth_token = token.oauth_token as string;
+      session.oauth_token_secret = token.oauth_token_secret as string;
+      session.user.id = token.userId as string;
       return session;
     },
   },
-  logger: {
-    error(code, metadata) {
-      console.error(code, metadata);
-    },
-    warn(code) {
-      console.warn(code);
-    },
-    debug(code, metadata) {
-      console.debug(code, metadata);
-    },
-  },
+  debug: true,  // Enable debug mode to get detailed logs
 });
 
 export default handler;
-
-declare global {
-  namespace NodeJS {
-    interface ProcessEnv {
-      GOOGLE_ID: string;
-      GOOGLE_SECRET: string;
-      TWITTER_CLIENT_ID: string;
-      TWITTER_CLIENT_SECRET: string;
-      NEXTAUTH_SECRET: string;
-    }
-  }
-}

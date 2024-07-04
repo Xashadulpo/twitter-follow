@@ -1,4 +1,3 @@
-// components/FollowButton.tsx
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useSession, signIn } from 'next-auth/react';
@@ -11,13 +10,14 @@ const FollowButton = ({ targetUserId }: { targetUserId: string }) => {
 
   const checkFollowStatus = async () => {
     if (session?.accessToken && session.user?.id) {
+      console.log('Session Data:', session);
       try {
-        console.log('Checking follow status...');
         const response = await axios.post('/api/checkFollow', {
           accessToken: session.accessToken,
           userId: session.user.id,
           targetUserId,
         });
+        console.log('API Response:', response.data);
         setIsFollowing(response.data.isFollowing);
       } catch (error) {
         console.error('Error checking follow status:', error);
@@ -25,6 +25,7 @@ const FollowButton = ({ targetUserId }: { targetUserId: string }) => {
         setLoading(false);
       }
     } else {
+      console.error('Missing accessToken or userId in session');
       setLoading(false);
     }
   };
